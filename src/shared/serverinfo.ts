@@ -1,0 +1,1 @@
+export let filegptendpoint="http://localhost:8694";

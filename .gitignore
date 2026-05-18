@@ -1,0 +1,38 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+src_old/
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.next/
+; src-tauri/icons/
+src/assets/
+src-tauri/links.md
+src/file-explorer.js
+src-tauri/clippy_stat.txt
+src-tauri/clippy.toml
+src-tauri/trie
+src/openjs.ts
+src/file-explorer-1.js.map
+src/file-explorer.js.map
+src/dialog.js.map
+src/dialog.js
+out/

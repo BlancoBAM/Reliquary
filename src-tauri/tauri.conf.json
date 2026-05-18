@@ -1,0 +1,72 @@
+{
+  "build": {
+    "beforeDevCommand": "yarn next dev --turbopack",
+    "beforeBuildCommand": "yarn next build --turbopack",
+    "devPath": "http://localhost:3000",
+    "distDir": "../out",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "filedime"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "os": {
+        "all": true
+      },
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "path": {
+        "all": true
+      },
+      "protocol": {
+        "all": true,
+        "asset": true,
+        "assetScope": ["**"]
+      },
+      "fs": {
+        "scope": ["**"],
+        "all": false,
+        "readFile": true
+      },
+      "dialog": {
+        "all": false,
+        "open": true
+      }
+    },
+    
+    "bundle": {
+      "active": true,
+      
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "visnk.app.vexplorer",
+      "targets": "all"
+    },
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost; media-src 'self' asset: https://asset.localhost; connect-src 'self' asset: *; style-src 'unsafe-inline' 'self'"
+    },
+    "updater": {
+      "active": false
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "maximized": false,
+        "resizable": true,
+        "title": "Filedime",
+        "width": 800,
+        "height": 600,
+        "visible":true
+      }
+    ]
+  }
+}
