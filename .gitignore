@@ -1,38 +1,61 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# ── Reliquary .gitignore ─────────────────────────────────────────────────────
 
-node_modules
-dist
-dist-ssr
-*.local
-src_old/
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# ── Build outputs ─────────────────────────────────────────────────────────────
+/src-tauri/target/
+/dist/
+/.next/
+/out/
+/build/
+
+# ── Node ──────────────────────────────────────────────────────────────────────
+node_modules/
+# Keep package-lock.json (npm reproducible builds)
+# Alternative package-manager lockfiles:
+bun.lockb
+pnpm-lock.yaml
+yarn.lock
+
+# ── OS / system ───────────────────────────────────────────────────────────────
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.next/
-; src-tauri/icons/
-src/assets/
-src-tauri/links.md
-src/file-explorer.js
-src-tauri/clippy_stat.txt
-src-tauri/clippy.toml
-src-tauri/trie
-src/openjs.ts
-src/file-explorer-1.js.map
-src/file-explorer.js.map
-src/dialog.js.map
-src/dialog.js
-out/
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+*~
+
+# ── IDE ── keep only .vscode/extensions.json (tool recommendations) ───────────
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/*.json.bak
+*.code-workspace
+*.code-profile
+
+# ── AI / agentic tooling (never commit these) ─────────────────────────────────
+.claude/
+.cursor/
+.vibecheck/
+.aider*
+.continue/
+.copilot/
+CLAUDE.md
+.github/copilot-instructions.md
+
+# ── Dev / analysis notes (version.txt is intentionally kept for update checks) ─
+api-design.md
+codeanalysis.txt
+depslist.txt
+frontenddepslist.txt
+ref.txt
+
+# ── Legacy filedime / non-standard artifacts ──────────────────────────────────
+shell.nix
+.ignore
+quickintro.png
+# Root-level pseudo-workflows dir (real CI lives in .github/workflows/)
+/workflows/
+
+# ── Tauri generated files ─────────────────────────────────────────────────────
+/src-tauri/gen/
