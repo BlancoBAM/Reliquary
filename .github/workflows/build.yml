@@ -9,12 +9,14 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux:
-    name: Build (Ubuntu 22.04)
+  build-deb:
+    name: Build .deb (Ubuntu 22.04)
     runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
 
+      # ── System deps (webkit2gtk-4.0 is the Tauri v1 requirement) ─────────
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -22,51 +24,77 @@ jobs:
             libwebkit2gtk-4.0-dev \
             build-essential \
             curl \
-            wget \
-            file \
             libssl-dev \
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf \
-            imagemagick
+            libsoup2.4-dev
 
-      - name: Install Node.js
+      # ── Node ─────────────────────────────────────────────────────────────
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # ── Rust ─────────────────────────────────────────────────────────────
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache Rust dependencies
+      - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
 
-      - name: Install frontend dependencies
-        run: npm install
+      # ── Frontend build (Next.js static export) ────────────────────────────
+      - name: Build Next.js frontend
+        run: npm run build
 
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+      # ── Tauri .deb build ──────────────────────────────────────────────────
+      - name: Build Tauri .deb package
+        run: npm run tauri -- build --bundles deb
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY || '' }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD || '' }}
+
+      # ── Upload .deb as release asset ─────────────────────────────────────
+      - name: Upload .deb to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Reliquary ${{ github.ref_name }}'
-          tauriScript: npm run tauri
-          projectPath: .
-          releaseBody: |
+          tag_name: ${{ github.ref_name }}
+          name: Reliquary ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: src-tauri/target/release/bundle/deb/*.deb
+          body: |
             ## 🔥 Reliquary ${{ github.ref_name }}
 
             Default file manager for **Lilith Linux** — dark, fast, and intelligent.
 
+            ### Install
+
+            ```bash
+            sudo dpkg -i reliquary_*.deb
+            # or
+            sudo apt install ./reliquary_*.deb
+            ```
+
+            ### Set as default file manager
+
+            ```bash
+            xdg-mime default reliquary.desktop inode/directory
+            ```
+
             ### Features
             - Drag-and-drop file moving
             - Undo (Ctrl+Z) for moves, renames, copies, and creates
-            - Rename & Delete (Trash / Permanent) from context menu
-            - Lilim AI integration for file-content querying
-            - Full Lilith Linux dark theme
-          releaseDraft: false
-          prerelease: false
+            - Rename & Delete (Trash / Permanent) from right-click menu
+            - Delete key trashes selection; Shift+Delete permanently removes
+            - Lilim AI integration for file-content semantic search
+            - Full Lilith Linux Infernal Dark theme
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
