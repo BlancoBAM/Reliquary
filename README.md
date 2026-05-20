@@ -103,12 +103,23 @@ npx tauri build
 
 ## 📦 Installing on Lilith Linux
 
-Reliquary replaces `cosmic-files` as the default file manager. AppImage releases are built automatically via GitHub Actions on every version tag.
+AppImage releases are built automatically via GitHub Actions when a version tag is pushed.
+Download the latest AppImage from the **[Releases page](https://github.com/BlancoBAM/Reliquary/releases/latest)**.
 
 ```bash
-# Download latest AppImage from Releases
-chmod +x Reliquary_*.AppImage
-./Reliquary_*.AppImage
+# 1. Download from the Releases page (or use wget/curl):
+wget https://github.com/BlancoBAM/Reliquary/releases/latest/download/Reliquary.AppImage
+
+# 2. Make executable and run:
+chmod +x Reliquary.AppImage
+./Reliquary.AppImage
+```
+
+To set Reliquary as the default file manager on Lilith Linux:
+
+```bash
+xdg-mime default reliquary.desktop inode/directory
+xdg-mime default reliquary.desktop application/x-gnome-saved-search
 ```
 
 ---

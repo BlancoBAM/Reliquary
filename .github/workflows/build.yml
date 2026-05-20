@@ -10,8 +10,8 @@ env:
 
 jobs:
   build-linux:
-    name: Build (Ubuntu)
-    runs-on: ubuntu-latest
+    name: Build (Ubuntu 22.04)
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
