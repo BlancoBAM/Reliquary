@@ -1,68 +1,119 @@
-[![Github All Releases](https://img.shields.io/github/downloads/visnkmr/filedime/total.svg)]()  
+# 🔥 Reliquary
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/visnkmr/filedime)  
+> **The default GUI file manager for [Lilith Linux](https://github.com/BlancoBAM)**
+> Built on [filedime](https://github.com/visnkmr/filedime) · Powered by Tauri + Next.js
 
-Filedime, an open source almost feature complete file explorer written in Rust (for all filesystem interaction,backend), Tauri(for frontend, front-backend intercom), File querying using Ollama (Go) and RAG (Python).
+![Lilith Linux](https://img.shields.io/badge/Lilith_Linux-Default_File_Manager-c0392b?style=for-the-badge)
+![Tauri](https://img.shields.io/badge/Tauri-1.x-blueviolet?style=for-the-badge)
+![License](https://img.shields.io/github/license/BlancoBAM/Reliquary?style=for-the-badge)
 
-![](https://cdn.jsdelivr.net/gh/visnkmr/filedime@nextrelease/quickintro.png) 
+---
 
+## ✨ Features
 
-Features implemented:
+| Feature | Description |
+|---|---|
+| **Drag & Drop Move** | Drag any file/folder onto a directory to move it instantly |
+| **Undo (Ctrl+Z)** | Undo the last move, copy, rename, or create operation |
+| **Rename** | Right-click → Rename, or use `F2` |
+| **Delete / Trash** | Right-click → Move to Trash (XDG-compliant) or Delete Permanently |
+| **Copy / Cut / Paste** | Full clipboard-style file operations with conflict resolution |
+| **Tabs & Multi-window** | Multiple tabs and independent windows |
+| **Bookmarks** | Sidebar bookmarks for quick access |
+| **Drive Listing** | Auto-detect and browse mounted drives |
+| **File Preview** | Inline preview of text, images, video, PDF, Office files |
+| **Search** | Full-path fuzzy search with search-list indexing |
+| **AI File Queries** | Ask questions about file contents via [Lilim](https://github.com/BlancoBAM/Lilim) |
+| **Miller Columns** | Alternative column-based navigation view |
+| **Dual Viewer** | Side-by-side file comparison |
+| **Dark Theme** | Lilith Linux infernal dark theme by default |
 
-- [x] multi window, open in new window open in right click context menu
-- [x] tabs, open in new tab option in context menu
-- [x] hot reload/ monitor for changes: markdown, html files using the watch button that shows up on previewing the file.
-- [x] search with speed and responsiveness parity with fzf
-- [x] folder size compute with speed and responsiveness parity with baobab(Disk Usage Analyzer).
-- [x] bookmark files or folders.
-- [x] details screen for list sort by date, size.
-- [x] optionally show immediate sub folder count of a folder.
-- [ ] recent files list.
-- [ ] show image dimension along with file type. (cannot use image crate as it cannot be used on nixos in default preference)
-- [ ] move files
-- [ ] undo last operation
-- [ ] show ramdisk among files (for the time being can bookmark ramdisk)
+---
 
+## 🎨 Theming
 
-Subtle features
-- [x] ollama api based integration for asking questions to your files.
-- [x] path autocomplete as you type.
-- [x] no of each file type in present location.
-- [x] show name of right click file above context menu
-- [x] show file location on hover
-- [x] show device vendor name on hover
-- [x] LOC for ts, rs, js, java, md ,css, html, toml, etc more can be implemented as required.
+Reliquary ships with the **Lilith Linux Infernal Dark** theme:
 
-Will be added based on demand
-- [ ] System Tray icons for opening new window and access recent files.
-- [ ] Chat history is not passed along with query as this will severely constraint query token size, or increase time needed for reply.
+- **Background**: `#0a0a0a` (near-black)
+- **Surface**: `#111111` / `#1a1a1a`
+- **Primary accent**: `#c0392b` (crimson flame)
+- **Secondary accent**: `#ff6b35` (ember orange)
+- **Typography**: Inter + Rajdhani (via Google Fonts)
 
-Thanks Tauri, Typescript, Webpack->RSPack, NextJS, ShadCN, Ollama, Langchain, llama.cpp
+---
 
+## 🤖 AI Integration (Lilim)
 
-## Recommended IDE Setup
+Reliquary connects to [Lilim](https://github.com/BlancoBAM/Lilim) — or any Ollama-compatible server — for:
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- **File embedding** — index file contents as vectors
+- **Semantic search** — query your files in natural language
+- **File chat** — ask questions about a specific document
 
-## Build from source
-  
-clone the repo  
-bun i
-should use node version 20
-in a new terminal window "cargo tauri dev" for testing.  
-in a new terminal window "cargo tauri build" for making executables (.exe for windows or bin file on linux).  
+Configure the server URL in **Settings → Lilim / LLM server URL** (default: `http://127.0.0.1:11434`).
 
-when browsing through code use the extensions listed in extensions.code-profile in vscodium/vscode
-when building on nixos use the shell.nix file provided if necessary
+---
 
-currently the code may contains lots of comments in rust it will be cleared up in the future.
+## 🚀 Building
 
-## Server guide for the complete stack for reference
-Ollama should be installed and running and ip address should be configured in settings, if ollama is running on a remote machine.
-Filechat UI LAN url can be found in settings.
+### Prerequisites
 
-## Chat self reference
-The filechat is accessible via its own repo as well @ https://github.com/visnkmr/batu, however filequerying will not work there.
-For LAN access from a remote machine you can use ollama only if ollama is set to accept requests from 0.0.0.0
+```bash
+# Ubuntu / Lilith Linux
+sudo apt install libwebkit2gtk-4.0-dev build-essential libssl-dev libgtk-3-dev
+# Node 20+, Rust stable
+```
 
-Thanks to all the maintainers of the libraries listed in the frontenddepslist.txt and depslist.txt files in the repo.
+### Dev mode
+
+```bash
+npm install
+npm run dev   # starts Next.js + Tauri dev server
+```
+
+### Release build
+
+```bash
+npm run build
+npx tauri build
+```
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+Z` | Undo last file operation |
+| `Delete` | Move selected to Trash |
+| `Shift+Delete` | Permanently delete selected |
+| `Ctrl+C` | Copy current path/selection |
+| `Ctrl+X` | Cut current path/selection |
+| `Ctrl+V` | Paste (drop to current folder) |
+| `Ctrl+T` | New tab |
+| `Ctrl+N` | New window |
+| `Ctrl+W` | Close tab |
+| `Ctrl+H` | Toggle hidden files |
+| `Alt+←` | Navigate back |
+| `Alt+→` | Navigate forward |
+| `Alt+↑` | Navigate to parent |
+| `F5` | Refresh |
+
+---
+
+## 📦 Installing on Lilith Linux
+
+Reliquary replaces `cosmic-files` as the default file manager. AppImage releases are built automatically via GitHub Actions on every version tag.
+
+```bash
+# Download latest AppImage from Releases
+chmod +x Reliquary_*.AppImage
+./Reliquary_*.AppImage
+```
+
+---
+
+## 🙏 Credits
+
+- Original **filedime** by [visnkmr](https://github.com/visnkmr/filedime) — MIT License
+- Reliquary fork & Lilith Linux integration by **BlancoBAM**
