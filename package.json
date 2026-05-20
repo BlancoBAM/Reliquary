@@ -29,7 +29,7 @@
     "babel-plugin-react-compiler": "^19.1.0-rc.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
+    "date-fns": "^3.6.0",
     "fastest-levenshtein": "^1.0.16",
     "fuse.js": "^7.1.0",
     "html-react-parser": "^5.2.5",
@@ -135,6 +135,6 @@
     "zod": "^3.24.1"
   },
   "resolutions": {
-    "date-fns": "^4.1.0"
+    "date-fns": "^3.6.0"
   }
 }
