@@ -55,6 +55,8 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Reliquary ${{ github.ref_name }}'
+          tauriScript: npm run tauri
+          projectPath: .
           releaseBody: |
             ## 🔥 Reliquary ${{ github.ref_name }}
 

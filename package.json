@@ -7,11 +7,10 @@
   },
   "scripts": {
     "start": "next start",
-    "build": "next build --turbopack",
-    "post----build": "next-sitemap",
-    "dev": "next dev --turbopack &&  node -p \"require('./package.json').version\" > version.txt",
-    "lint": "next lint",
-    "export": "next export"
+    "build": "next build",
+    "dev": "next dev",
+    "tauri": "tauri",
+    "lint": "next lint"
   },
   "author": "BlancoBAM",
   "license": "MIT",
