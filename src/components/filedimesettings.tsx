@@ -68,7 +68,7 @@ function reloadsize(togglewhat="size"){
 
 //     },[zoomLevel])
 // }
-export default function FiledimeSettings(){
+export default function ReliquarySettings(){
     const [filedimegptendpoint,setfge]=useState("http://localhost:8694")
     const [embeddingmodel,setem]=useState("nomic-embed-text")
     // zoomsetup();
@@ -107,7 +107,7 @@ export default function FiledimeSettings(){
                     {/* add control option to stop and start filedimegpt control server */}
                     {/* add textbox to set custom filedimegpt endpoint */}
                     <p className="font-semibold">Currently only local models based file embedding is supported. If you need file embedding support via openrouter,etc; Please raise an issue in the github repo.</p>
-                    <div className="flex flex-row items-center gap-2 "><p className="font-semibold">Local LLM server IP</p>
+                    <div className="flex flex-row items-center gap-2 "><p className="font-semibold">Lilim / LLM server URL</p>
                         <Input value={filedimegptendpoint}
                     type="text"
                     placeholder="Local server IP"
@@ -124,7 +124,7 @@ export default function FiledimeSettings(){
                             endpoint:filedimegptendpoint,
                             whichvar:"ollamaurl",
                             defaultval:"http://localhost:11434"
-                          }).catch((e)=>console.log("Failed to update FiledimeGPT server IP."))
+                          }).catch((e)=>console.log("Failed to update ReliquaryAI server IP."))
                     }}><div className="flex flex-row items-center gap-2"><Save className="h-4 w-4"/><p>(Save)</p></div></Button>
                         </div> 
                         <div className="flex flex-row items-center gap-2 "><p className="font-semibold">Embedding model to use</p>
@@ -168,8 +168,8 @@ export default function FiledimeSettings(){
             console.log(e)
             setlocalip(
                 <>
-                    <p className="font-semibold">Ollama should be running @ http://{e}:11434.</p>
-                    {/* <p className="font-semibold"><Link target="_blank" href="https://github.com/visnkmr/filegpt-filedime">FiledimeGPT python server</Link> if installed should be running @ http://{e}:8694.</p> */}
+                    <p className="font-semibold">Lilim / Ollama server should be running @ http://{e}:11434.</p>
+                    {/* <p className="font-semibold"><Link target="_blank" href="https://github.com/visnkmr/filegpt-filedime">ReliquaryAI python server</Link> if installed should be running @ http://{e}:8694.</p> */}
                     <p className="font-semibold">Filechat UI is accessible @ http://{e}:8477 for any device on your connected network.</p>
                 </>
         );
@@ -188,7 +188,7 @@ export default function FiledimeSettings(){
                     <div className="flex flex-col gap-y-5">
                         <div className="flex flex-row font-semibold gap-2 place-items-center">
                             <FolderIcon className="h-6 w-6" />
-                            <span className="font-bold">Filedime v{currentversion}</span>
+                            <span className="font-bold">Reliquary v{currentversion}</span>
                             <Button
                                 className={`${releaseavailable ? 'hidden' : ''}`}
                                 variant={'outline'}
@@ -205,7 +205,7 @@ export default function FiledimeSettings(){
                                                     description: `v${r} is available fordownload`,
                                                     action: (
                                                         <Button variant={'outline'}>
-                                                            <Link target="_blank" href="https://github.com/visnkmr/filedime/releases/latest">
+                                                            <Link target="_blank" href="https://github.com/BlancoBAM/Reliquary/releases/latest">
                                                                 Update
                                                             </Link>
                                                         </Button>
@@ -227,13 +227,13 @@ export default function FiledimeSettings(){
                         <div className="font-bold">
                             Make the app better, just submit Pull Request after making changes.
                             <br /> Source code available{' '}
-                            <Link target="_blank" className="text-blue-600" href={'https://github.com/visnkmr/filedime'}>
+                            <Link target="_blank" className="text-blue-600" href={'https://github.com/BlancoBAM/Reliquary'}>
                                 here
                             </Link>
                         </div>
                         <div>
                             <Button className={`${releaseavailable ? '' : 'hidden'}`} variant={'outline'}>
-                                <Link target="_blank" href="https://github.com/visnkmr/filedime/releases/latest">
+                                <Link target="_blank" href="https://github.com/BlancoBAM/Reliquary/releases/latest">
                                     Update
                                 </Link>
                             </Button>

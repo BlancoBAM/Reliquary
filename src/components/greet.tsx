@@ -142,7 +142,7 @@ export default function Greet() {
             variant:"destructive",
             title: "Update available",
             description: `v${r} is available fordownload`,
-            action: <Button variant={"outline"}><Link target="_blank" href="https://github.com/visnkmr/filedime/releases/latest">Update</Link></Button>,
+            action: <Button variant={"outline"}><Link target="_blank" href="https://github.com/BlancoBAM/Reliquary/releases/latest">Update</Link></Button>,
           })
 
         }
@@ -313,92 +313,32 @@ export default function Greet() {
       ctrlKey: true,
       code: "KeyH", 
     });
+
+    // ── Ctrl+Z — Undo last file operation ───────────────────────────────────
     useKeyboardShortcut((e)=>{
-      e.preventDefault(); 
-      console.log("closetab")
-      if(!tablist)return
-      if(tablist?.length<1) return;
-      closetab(activetabid);
-      activateTab(tablist[tablist.length-1])
-    }, {
-      ctrlKey: true,
-      code: "KeyW", 
-    });
+      e.preventDefault();
+      invoke("undo_last_op", {}).then((msg: unknown) => {
+        toast({ title: "↩ Undone", description: msg as string });
+        reloadlist();
+      }).catch((err: unknown) => {
+        toast({ variant: "destructive", title: "Cannot undo", description: err as string });
+      });
+    }, { ctrlKey: true, code: "KeyZ" });
+
+    // ── Delete key — trash selected file ────────────────────────────────────
     useKeyboardShortcut((e)=>{
-      e.preventDefault(); 
-      reloadlist()
-    }, {
-      // ctrlKey: true,
-      code: "F5", 
-    });
-    useKeyboardShortcut(()=>{
-      invoke("navbrowsetimeline",{
-        tabid:activetabid.toString(),
-        dir:true
-      }).then((ei)=>{
-        console.log(ei)
-        // addTofwdHistory(activetabid.toString(),path)
-        // addTofwdHistory(activetabid.toString())
-        let pathtogoto = ei as unknown as string
-        if(pathtogoto){
-          
-          reset(pathtogoto)
-          updatetabs(pathtogoto)
-          // setpath()
-          // setpsplitl(splitpath(pathtogoto))
-          // sst("")
-          // useEffect(() => {
-            listfiles(activetabid,pathtogoto);
-        }
-      }).catch((e)=>console.error(e))
-    }, {
-      altKey: true,
-      code: "ArrowLeft", 
-    });
-    useKeyboardShortcut(()=>{
-      invoke("navbrowsetimeline",{
-        tabid:activetabid.toString(),
-        dir:false
-      }).then((ei)=>{
-        console.log(ei)
-        let pathtogoto = ei as unknown as string
-        if(pathtogoto ){
-  
-          reset(pathtogoto)
-          updatetabs(pathtogoto)
-          // setpath()
-          // setpsplitl(splitpath(pathtogoto))
-          // sst("")
-          // useEffect(() => {
-            listfiles(activetabid,pathtogoto);
-        }
-      }).catch((e)=>console.error(e))
-    }, {
-      altKey: true,
-      code: "ArrowRight", 
-    });
-    useKeyboardShortcut(()=>{
-      invoke("getparentpath",{
-        path
-      }).then((ei)=>{
-        console.log(ei)
-        // addTofwdHistory(activetabid.toString(),path)
-        // addTofwdHistory(activetabid.toString())
-        let pathtogoto = ei as unknown as string
-        if(pathtogoto){
-          reset(pathtogoto)
-          updatetabs(pathtogoto)
-          // setpath()
-          // setpsplitl(splitpath(pathtogoto))
-          // sst("")
-          // useEffect(() => {
-            listfiles(activetabid,pathtogoto);
-        }
-      }).catch((e)=>console.error(e))
-    }, {
-      altKey: true,
-      code: "ArrowUp", 
-    });
+      if(fileopsrc.length > 0){
+        e.preventDefault();
+        invoke("delete_items", { paths: fileopsrc, permanent: e.shiftKey }).then(() => {
+          setfos([]);
+          toast({ title: e.shiftKey ? "🔥 Permanently deleted" : "🗑 Moved to trash" });
+          reloadlist();
+        }).catch((err: unknown) => {
+          toast({ variant: "destructive", title: "Delete failed", description: err as string });
+        });
+      }
+    }, { code: "Delete" });
+
     useMouseShortcut(()=>{
       // reloadlist()
     },{
@@ -676,42 +616,57 @@ export default function Greet() {
             <ContextMenuTrigger>
               <HoverCard>
                 <HoverCardTrigger>
-                <button className="w-full h-full flex justify-start whitespace-nowrap " onDoubleClick={
-                  ()=>
-                  { 
+                <button
+                  className="w-full h-full flex justify-start whitespace-nowrap rq-file-row"
+                  draggable
+                  onDragStart={(ev) => {
+                    ev.dataTransfer.setData("text/plain", path);
+                    ev.dataTransfer.setData("application/reliquary-path", path);
+                    ev.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(ev) => {
+                    if(!is_dir) return;
+                    ev.preventDefault();
+                    ev.dataTransfer.dropEffect = "move";
+                    (ev.currentTarget as HTMLButtonElement).classList.add("dragging-over");
+                  }}
+                  onDragLeave={(ev) => {
+                    (ev.currentTarget as HTMLButtonElement).classList.remove("dragging-over");
+                  }}
+                  onDrop={(ev) => {
+                    ev.preventDefault();
+                    (ev.currentTarget as HTMLButtonElement).classList.remove("dragging-over");
+                    if(!is_dir) return;
+                    const srcPath = ev.dataTransfer.getData("application/reliquary-path")
+                      || ev.dataTransfer.getData("text/plain");
+                    if(!srcPath || srcPath === path) return;
+                    invoke("moveop", {
+                      srclist: JSON.stringify([srcPath]),
+                      dst: path,
+                      dlastore: "[]"
+                    }).then(() => {
+                      toast({ title: "📦 Moved", description: `→ ${path}` });
+                      reloadlist();
+                    }).catch((err: unknown) =>
+                      toast({ variant:"destructive", title:"Move failed", description: err as string })
+                    );
+                  }}
+                  onDoubleClick={()=>{
                     let clickpath=path;
-                    // console.log("gridlayout clicked");
-                      if(is_dir){
-                        addToTabHistory(activetabid.toString(),clickpath)
-                        reset(clickpath)
-                        updatetabs(clickpath)
-                      
-                        // setpath()
-                        // setpsplitl(splitpath(path))
-                        // sst(name)
-                      }
-                    // useEffect(() => {
-                      listfiles(activetabid,clickpath);
-                    // },[])
+                    if(is_dir){
+                      addToTabHistory(activetabid.toString(),clickpath)
+                      reset(clickpath)
+                      updatetabs(clickpath)
                     }
-                  }>
-                  {/* <CardContent > */}
+                    listfiles(activetabid,clickpath);
+                  }}>
                   <div className="flex items-center w-full">
-                    
                   <div>
-  
                     {is_dir?<Folder className="h-6 w-6 mr-3" />:<FileIcon className="h-6 w-6 mr-3" />}
                   </div>
-                    {/* <span className="font-medium text-lg"> */}
-                    {/* <div className="w-full"> */}
-                    <div className=""> 
-  
+                    <div className="">
                       {name}{foldercon>0 ? "(" + foldercon + ")" : ""}
                     </div>
-                    {/* </div> */}
-                      {/* </span> */}
-                  {/* </CardContent> */}
-                  
                   </div>
                 </button>
                 </HoverCardTrigger>
@@ -797,6 +752,26 @@ export default function Greet() {
                 setfos((old)=>[...old,path])
                 setFileOpType("cut")
               }}>Cut</ContextMenuItem>
+              <ContextMenuItem onSelect={()=>{
+                const newName = window.prompt("Rename to:", name);
+                if(!newName || newName === name) return;
+                const parent = path.substring(0, path.lastIndexOf("/"));
+                const newPath = `${parent}/${newName}`;
+                invoke("rename_item", { from: path, to: newPath })
+                  .then(() => toast({ title: "✏️ Renamed", description: `${name} → ${newName}` }))
+                  .catch((err: unknown) => toast({ variant:"destructive", title:"Rename failed", description: err as string }));
+              }}>Rename</ContextMenuItem>
+              <ContextMenuItem onSelect={()=>{
+                invoke("delete_items", { paths: [path], permanent: false })
+                  .then(() => { toast({ title: "🗑 Moved to trash" }); reloadlist(); })
+                  .catch((err: unknown) => toast({ variant:"destructive", title:"Delete failed", description: err as string }));
+              }} className="text-red-500">Move to Trash</ContextMenuItem>
+              <ContextMenuItem onSelect={()=>{
+                if(!window.confirm(`Permanently delete "${name}"? This cannot be undone.`)) return;
+                invoke("delete_items", { paths: [path], permanent: true })
+                  .then(() => { toast({ title: "🔥 Deleted permanently" }); reloadlist(); })
+                  .catch((err: unknown) => toast({ variant:"destructive", title:"Delete failed", description: err as string }));
+              }} className="text-red-600 font-semibold">Delete Permanently</ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>
            </div>
@@ -1196,7 +1171,7 @@ export default function Greet() {
             </div>
             <button className="flex items-center gap-2 font-semibold">
               <Folder className="h-6 w-6" />
-              <span className="">Filedime</span>
+              <span className="rq-brand text-base">Reliquary</span>
             </button>
             
             {/* <LogInIcon className="w-4 h-4" onClick={()=>{
@@ -1572,7 +1547,7 @@ export default function Greet() {
                     variant:"destructive",
                     title: "Failed",
                     description: `Drive cannot be mounted`,
-                    // action: <Button variant={"outline"}><Link target="_blank" href="https://github.com/visnkmr/filedime/releases/latest">Update</Link></Button>,
+                    // action: <Button variant={"outline"}><Link target="_blank" href="https://github.com/BlancoBAM/Reliquary/releases/latest">Update</Link></Button>,
                   })
                 })
               }else{
@@ -1658,7 +1633,7 @@ export default function Greet() {
                           variant:"destructive",
                           title: "Failed",
                           description: `Drive cannot be unmounted`,
-                          // action: <Button variant={"outline"}><Link target="_blank" href="https://github.com/visnkmr/filedime/releases/latest">Update</Link></Button>,
+                          // action: <Button variant={"outline"}><Link target="_blank" href="https://github.com/BlancoBAM/Reliquary/releases/latest">Update</Link></Button>,
                         })
                       })
                      }}>Unmount device</ContextMenuItem>

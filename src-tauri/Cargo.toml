@@ -1,10 +1,10 @@
 [package]
-name = "filedime"
-version = "0.9.7"
-description = "rust based file explorer."
-authors = ["visnk"]
-license = ""
-repository = "https://github.com/visnkmr/filedime"
+name = "reliquary"
+version = "1.0.0"
+description = "A feature-rich file manager for Lilith Linux with AI integration."
+authors = ["BlancoBAM"]
+license = "MIT"
+repository = "https://github.com/BlancoBAM/Reliquary"
 edition = "2021"
 
 # [build]
@@ -85,11 +85,14 @@ futures = "0.3"
 regex="1.10.2"
 # gtk = "0.15.5"
 # gio = "0.18.4"
-# ollama-rs = {version="0.1.7",features= ["stream"] }
-# warp="0.3.6"
-include_dir = "0.7.3"
-ollama-rs = {version = "0.3", features = ["stream"] } # Or the latest version from crates.io
+# Native candle inference (future): pin to a candle release that resolves
+# the rand_distr version conflict before re-enabling.
+# candle-core = "0.3"
+# candle-transformers = "0.3"
+# candle-nn = "0.3"
+# tokenizers = "0.15"
 anyhow = "1.0.98" # Good for simple error handling
+include_dir = "0.7.3"
 memvdb = "0.1.1"
 plist="1.7.2" 
 text-splitter = { version = "0.27.0" } # Or "tiktoken-rs"

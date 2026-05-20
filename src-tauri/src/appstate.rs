@@ -2,11 +2,9 @@
 use anyhow::anyhow;
 use filesize::PathExt;
 use memvdb::{CacheDB, Distance, Embedding};
-use ollama_rs::generation::completion::request::GenerationRequest;
-use ollama_rs::generation::embeddings::request::GenerateEmbeddingsRequest;
-use ollama_rs::Ollama;
 use prefstore::{clearall, clearcustom, getallcustomwithin, getcustom, savecustom};
 use shiva::core::bytes::Bytes;
+use crate::lilim_client::LilimClient;
 
 use text_splitter::TextSplitter;
 use std::collections::{HashMap, HashSet};
@@ -57,7 +55,7 @@ pub struct AppStateStore {
     pub stl: Arc<Mutex<FxHashMap<String, HashSet<String>>>>,
     pub process_count: Arc<Mutex<i32>>,
     pub buttonnames: HashMap<String, String>,
-    pub ollama: Ollama,
+    pub lilim: LilimClient,
     pub db: Arc<RwLock<CacheDB>>,
     pub filelist:RwLock<Vec<String>>,
     pub embedding_model_name: String,
@@ -99,20 +97,18 @@ pub fn get_enum_value(atomic_enum: &AtomicI8) -> wThread {
 use crate::{dirsize, sizeunit};
 impl AppStateStore {
     pub fn new(expiration: u64) -> Self {
-        // let (tx, rx) = mpsc::channel::<String>();
-        let ollama = Ollama::from_url(tauri::Url::parse(&getcustom("filedime", "storevals/ollamaurl.set", "http://127.0.0.1:11434")).unwrap());
-        let embedding_model = &getcustom("filedime", "storevals/embedding_model.set", "nomic-embed-text"); // Ensure this model is available
+        let lilim_url = getcustom("reliquary", "storevals/lilimurl.set", "http://127.0.0.1:11434");
+        let lilim = LilimClient::new(lilim_url);
+        let embedding_model = &getcustom("reliquary", "storevals/embedding_model.set", "nomic-embed-text");
         // let llm_model = "qwen2.5:3b".to_string(); // Ensure this model is available
 
         // Initialize CacheDB
         let mut db = CacheDB::new();
         Self {
-            // filegptendpoint:getcustom("filedime", "gpt/filegpt.endpoint", "http://localhost:8694"),
-            // Wrap the cache in a RwLock
             cstore: RwLock::new(FxHashMap::default()),
             includefolderinsearch: RwLock::new({
                 let truechecker =
-                    getcustom("filedime", "storevals/includefolderinsearch.set", "false");
+                    getcustom("reliquary", "storevals/includefolderinsearch.set", "false");
                 match (truechecker.as_str()) {
                     "true" => true,
                     _ => false,
@@ -123,7 +119,7 @@ impl AppStateStore {
             starttime: Arc::new(AtomicI64::new(0)),
             nosize: RwLock::new(true),
             excludehidden: RwLock::new({
-                let truechecker = getcustom("filedime", "storevals/excludehidden.set", "false");
+                let truechecker = getcustom("reliquary", "storevals/excludehidden.set", "false");
                 match (truechecker.as_str()) {
                     "true" => true,
                     _ => false,
@@ -134,11 +130,11 @@ impl AppStateStore {
             showfolderchildcount: RwLock::new(false),
             loadsearchlist: RwLock::new(false),
             tabs: RwLock::new({
-                let truechecker = getcustom("filedime", "storevals/savetabs.set", "false");
+                let truechecker = getcustom("reliquary", "storevals/savetabs.set", "false");
                 let mut fxhs = FxHashSet::default();
                 match (truechecker.as_str()) {
                     "true" => {
-                        for (_, content) in getallcustomwithin("filedime", "tabs", "tabinfo") {
+                        for (_, content) in getallcustomwithin("reliquary", "tabs", "tabinfo") {
                             fxhs.insert(content);
                         }
                     }
@@ -149,13 +145,13 @@ impl AppStateStore {
                         None => {}
                     },
                 }
-                clearall("filedime/tabs/", "tabinfo");
+                clearall("reliquary/tabs/", "tabinfo");
                 fxhs
             }),
             expiration: Duration::from_secs(expiration),
             bookmarks: RwLock::new({
                 let mut fxhs = HashSet::default();
-                for (id, path) in getallcustomwithin("filedime", "bookmarks", "mark") {
+                for (id, path) in getallcustomwithin("reliquary", "bookmarks", "mark") {
                     fxhs.insert(marks {
                         path: path.clone(),
                         name: PathBuf::from(path.clone())
@@ -181,14 +177,14 @@ impl AppStateStore {
             process_count: Arc::new(Mutex::new(0)),
             buttonnames: {
                 let mut buttonnames = HashMap::new();
-                for (i, j) in getallcustomwithin("filedime", "custom_scripts", "fds") {
+                for (i, j) in getallcustomwithin("reliquary", "custom_scripts", "fds") {
                     buttonnames.insert(i.clone(), j.clone());
                 }
                 buttonnames
             },
             db: Arc::new(RwLock::new(db)),
             filelist: RwLock::new(vec![]),
-            ollama:ollama,
+            lilim,
             embedding_model_name: embedding_model.to_string(),
             // llm_model_name: llm_model,
         }
@@ -217,17 +213,14 @@ impl AppStateStore {
         let splitter = TextSplitter::new(256);
         let mut seen = std::collections::HashSet::new();
     let texts_to_embed: Vec<&str> = splitter.chunks(&texts_to_embed).filter(|c| seen.insert(*c)).collect();
-        let filetexts=texts_to_embed.clone();
-        let request = GenerateEmbeddingsRequest::new(
-            embedding_model_name, // The model name
-            texts_to_embed.clone().into(), // The text(s) to embed. Use .into() for Vec<String>
-        );
-        let response = self.ollama.generate_embeddings(request).await.unwrap();
-        let (embeddings) = response.embeddings;
-    //  {
+        let filetexts = texts_to_embed.clone();
+        let embeddings = self.lilim
+            .generate_embeddings(&embedding_model_name, texts_to_embed.clone())
+            .await
+            .map_err(|e| anyhow!("Embedding failed: {}", e))?;
         println!("Successfully generated {} embeddings.", embeddings.len());
         let mut db=self.db.write().unwrap();
-        db.create_collection(path.clone(), 768, Distance::Cosine).unwrap(); // 768 is common for nomic-embed-text
+        db.create_collection(path.clone(), embeddings.first().map(|v| v.len()).unwrap_or(768), Distance::Cosine).unwrap();
             
         for (i, embedding) in embeddings.iter().enumerate() {
             // println!("Embedding for text {}: [{}, {}, ..., {}] (Dimension: {})",
@@ -338,7 +331,7 @@ impl AppStateStore {
 
     
     pub fn addmark(&self, path: String, id: String) {
-        savecustom("filedime", format!("bookmarks/{}.mark", id), path.clone());
+        savecustom("reliquary", format!("bookmarks/{}.mark", id), path.clone());
         let pof = path.clone();
         let pathoffile = Path::new(&pof);
         self.bookmarks.write().unwrap().insert(marks {
@@ -359,21 +352,21 @@ impl AppStateStore {
         tabs
     }
     pub fn addtab(&self, id: String, path: String, mut ff: String, windowname: String) {
-        savecustom("filedime", format!("tabs/{}.tabinfo", id), path.clone());
+        savecustom("reliquary", format!("tabs/{}.tabinfo", id), path.clone());
         println!("{}---{}---{}", id, path, ff);
 
         let mut tabs = self.tabs.write().unwrap();
         tabs.insert(path);
     }
     pub fn removetab(&self, id: String, windowname: String) {
-        clearcustom("filedime", format!("tabs/{}.tabinfo", id));
+        clearcustom("reliquary", format!("tabs/{}.tabinfo", id));
         // println!("{}---{}---{}",id,path,ff);
 
         let mut tabs = self.tabs.write().unwrap();
         tabs.remove(&(windowname + "." + &id));
     }
     pub fn removemark(&self, path: String, id: String) {
-        clearcustom("filedime", format!("bookmarks/{}.mark", id));
+        clearcustom("reliquary", format!("bookmarks/{}.mark", id));
         // println!("{}---{}---{}",id,path,ff);
 
         let mut marks = self.bookmarks.write().unwrap();
@@ -538,7 +531,7 @@ impl AppStateStore {
         {
             eh = !*self.excludehidden.read().unwrap();
         }
-        savecustom("filedime", "storevals/excludehidden.set", eh);
+        savecustom("reliquary", "storevals/excludehidden.set", eh);
 
         let mut seteh = self.excludehidden.write().unwrap();
         *seteh = eh;
@@ -552,7 +545,7 @@ impl AppStateStore {
         {
             eh = !*self.includefolderinsearch.read().unwrap();
         }
-        savecustom("filedime", "storevals/includefolderinsearch.set", eh);
+        savecustom("reliquary", "storevals/includefolderinsearch.set", eh);
 
         let mut seteh = self.includefolderinsearch.write().unwrap();
         *seteh = eh;

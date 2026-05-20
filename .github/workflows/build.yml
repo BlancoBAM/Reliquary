@@ -1,0 +1,70 @@
+name: Build & Release Reliquary
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux:
+    name: Build (Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            imagemagick
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Reliquary ${{ github.ref_name }}'
+          releaseBody: |
+            ## 🔥 Reliquary ${{ github.ref_name }}
+
+            Default file manager for **Lilith Linux** — dark, fast, and intelligent.
+
+            ### Features
+            - Drag-and-drop file moving
+            - Undo (Ctrl+Z) for moves, renames, copies, and creates
+            - Rename & Delete (Trash / Permanent) from context menu
+            - Lilim AI integration for file-content querying
+            - Full Lilith Linux dark theme
+          releaseDraft: false
+          prerelease: false

@@ -1,6 +1,6 @@
 {
-  "name": "filedime",
-  "version": "0.9.9",
+  "name": "reliquary",
+  "version": "1.0.0",
   "private": true,
   "engines": {
     "node": "20.x"
@@ -13,7 +13,7 @@
     "lint": "next lint",
     "export": "next export"
   },
-  "author": "visnkmr",
+  "author": "BlancoBAM",
   "license": "MIT",
   "devDependencies": {
     "@hookform/resolvers": "^3.9.1",

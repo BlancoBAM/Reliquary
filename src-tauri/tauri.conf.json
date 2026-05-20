@@ -7,7 +7,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "filedime"
+    "productName": "Reliquary"
   },
   "tauri": {
     "allowlist": {
@@ -48,7 +48,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "visnk.app.vexplorer",
+      "identifier": "com.blancobam.reliquary",
       "targets": "all"
     },
     "security": {
@@ -62,7 +62,7 @@
         "fullscreen": false,
         "maximized": false,
         "resizable": true,
-        "title": "Filedime",
+        "title": "Reliquary",
         "width": 800,
         "height": 600,
         "visible":true

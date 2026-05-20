@@ -14,6 +14,9 @@ use std::{
     time::{self, Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 mod dirsize;
+mod lilim_client;
+mod undoops;
+use undoops::{UndoStack, undo_last_op, undo_stack_len};
 mod drivelist;
 mod fileitem;
 mod embedhelp;
@@ -27,7 +30,7 @@ use chrono::{DateTime, Local, Utc};
 use local_ip_address::local_ip;
 // use get_size::GetSize;
 use navtimeline::{BrowserHistory, Page};
-use ollama_rs::generation::{completion::request::GenerationRequest, embeddings::request::GenerateEmbeddingsRequest};
+// LilimClient replaces ollama_rs — see lilim_client.rs
 use text_splitter::TextSplitter;
 // use filesize::PathExt;
 
@@ -201,47 +204,30 @@ async fn queryfile(question: String, model: String,embeddingmodelname:String,use
             }
         }
         else
-        {
-
-            let splitter = TextSplitter::new(256);
+        {            let splitter = TextSplitter::new(256);
             let mut seen = std::collections::HashSet::new();
     let texts_to_embed: Vec<&str> = splitter.chunks(&question).filter(|c| seen.insert(*c)).collect();
         
-            // Create the embedding request for the user's question
-            let query_req = GenerateEmbeddingsRequest::new(
-                embeddingmodelname.clone(),
-                texts_to_embed.clone().into(),
-            );
+            // Generate embeddings via Lilim for the user's question
+            let query_embeddings = state.lilim
+                .generate_embeddings(&embeddingmodelname, texts_to_embed.clone())
+                .await
+                .unwrap_or_default();
         
-            // 1. AWAIT: Generate embeddings for the question. No locks are held here.
-            let embeddings_response = state.ollama.generate_embeddings(query_req).await.unwrap();
-        
-            // This string will hold the data we retrieve from the database.
-            // let mut retrieved_context = String::new();
-        
-            // --- Start of the critical section ---
-            // Use a block to strictly limit the lifetime of the RwLockReadGuard.
             {
                 let db = Arc::clone(&state.db);
-                // The read guard 'collections_guard' is created here.
                 let collections_guard = db.read().unwrap(); 
                 let collection = collections_guard.get_collection(&path).unwrap();
         
-                for (i,embedding) in embeddings_response.embeddings.iter().enumerate() {
-                    // Perform the similarity search while the lock is held.
+                for embedding in query_embeddings.iter() {
                     for similar_result_found in collection.get_similarity(embedding, 10) {
-                        // println!("{:?}",similar_result_found.embedding.id);
-                        // Assuming the 'title' is what you want to retrieve.
-                        // Using .get() and handling the Option is safer.
                         if let Some(title_value) = similar_result_found.embedding.id.get(&format!("title")) {
-                            // Convert the value to a string slice and push it.
                                 retrieved_context.push_str(title_value.as_str());
-                                retrieved_context.push_str("\n"); // Add a separator for clarity
+                                retrieved_context.push_str("\n");
                         }
                     }
                 }
-            } // <-- The 'collections_guard' is dropped here, and the read lock is released.
-              // We are now safe to .await again.
+            }
         
             }
     println!("Retrieved Content: {}", retrieved_context);
@@ -285,12 +271,12 @@ async fn highlightfile(path: String, theme: String) -> Result<String, String> {
 fn filegptendpoint(endpoint: String,whichvar:String,defaultval:String) -> Result<String, String> {
     if (endpoint == "") {
         Ok(getcustom(
-            "filedime",
+            "reliquary",
             format!("storevals/{}.set",whichvar),
             defaultval,
         ))
     } else {
-        savecustom("filedime", format!("storevals/{}.set",whichvar ), endpoint.clone());
+        savecustom("reliquary", format!("storevals/{}.set",whichvar ), endpoint.clone());
         Ok(endpoint)
     }
 }
@@ -404,21 +390,21 @@ fn startup(window: &AppHandle) -> Result<(), ()> {
     //define format for adding custom button as extensions to ui
     // if cfg!(target_os = "linux") {
     //     // getcustom(
-    //     //     "filedime",
+    //     //     "reliquary",
     //     //     "custom_scripts/terminal_open.fds",
     //     //     "exo-open --working-directory %f --launch TerminalEmulator",
     //     // );
     // } else if cfg!(target_os = "windows") {
         getcustom(
-            "filedime",
+            "reliquary",
             "custom_scripts/terminal_open.fds",
             serde_json::to_string(&defaultopenterm).unwrap(),
         );
     // }
 
     let mut buttonnames = Vec::new();
-    // println!("{:?}",getallcustomwithin("filedime", "custom_scripts","fds"));
-    for (i, j) in getallcustomwithin("filedime", "custom_scripts", "fds") {
+    // println!("{:?}",getallcustomwithin("reliquary", "custom_scripts","fds"));
+    for (i, j) in getallcustomwithin("reliquary", "custom_scripts", "fds") {
         buttonnames.push(i.clone().replace("_", " "));
         // println!("name of file{:?}",i);//filename
         // println!("{:?}",j);//contents
@@ -551,8 +537,8 @@ async fn nosize(
             state.togglefolcount();
         }
         "sessionsave" => {
-            savecustom("filedime", "storevals/savetabs.set", {
-                let truechecker = getcustom("filedime", "storevals/savetabs.set", "false");
+            savecustom("reliquary", "storevals/savetabs.set", {
+                let truechecker = getcustom("reliquary", "storevals/savetabs.set", "false");
                 match (truechecker.as_str()) {
                     "true" => false,
                     _ => true,
@@ -633,7 +619,7 @@ fn configfolpath(window: Window, state: State<'_, AppStateStore>) -> String {
     serde_json::to_string(&json!({
       "excludehidden":state.excludehidden.read().unwrap().clone(),
       "sessionstore":({
-          let truechecker=getcustom("filedime", "storevals/savetabs.set", "false");
+          let truechecker=getcustom("reliquary", "storevals/savetabs.set", "false");
           match(truechecker.as_str()){
           "true"=>{
               true
@@ -644,9 +630,9 @@ fn configfolpath(window: Window, state: State<'_, AppStateStore>) -> String {
       "includefolder":state.includefolderinsearch.read().unwrap().clone(),
       "childcount":state.showfolderchildcount.read().unwrap().clone(),
       "folsize":state.nosize.read().unwrap().clone(),
-      "cfpath":config_folder_path("filedime").as_path().to_string_lossy().to_string(),
+      "cfpath":config_folder_path("reliquary").as_path().to_string_lossy().to_string(),
       "cfpathsize":(sizeunit::size(dirsize::dir_size(
-          &config_folder_path("filedime").as_path().to_string_lossy().to_string(),
+          &config_folder_path("reliquary").as_path().to_string_lossy().to_string(),
           &state,
       ),true)),
     //   "frontend_size":(sizeunit::size(&PROJECT_DIR.,true)),
@@ -706,22 +692,77 @@ async fn loadsearchlist(
 // }
 #[tauri::command]
 async fn checker() -> Result<String, String> {
-    let url = "https://cdn.jsdelivr.net/gh/visnkmr/filedime@nextrelease/version.txt";
-    match (reqwest::get(url).await) {
-        Ok(response) => {
-            // Ensure the response is successful
-            if response.status().is_success() {
-                // Read the response body as text
-                let body = response.text().await.unwrap_or_default();
-                println!("Response data: {}", body);
-                return Ok(body);
+    let url = "https://raw.githubusercontent.com/BlancoBAM/Reliquary/master/version.txt";
+    match reqwest::get(url).await {
+        Ok(response) if response.status().is_success() => {
+            let body = response.text().await.unwrap_or_default();
+            println!("Remote version: {}", body.trim());
+            Ok(body.trim().to_string())
+        }
+        _ => Err("Could not check for updates".to_string()),
+    }
+}
+
+// ── File rename ─────────────────────────────────────────────────────────────
+#[tauri::command]
+async fn rename_item(
+    from: String,
+    to: String,
+    undo_stack: tauri::State<'_, std::sync::Arc<UndoStack>>,
+    window: tauri::Window,
+) -> Result<(), String> {
+    use std::path::Path;
+    let from_path = Path::new(&from);
+    let to_path = Path::new(&to);
+    if !from_path.exists() {
+        return Err(format!("Source does not exist: {}", from));
+    }
+    std::fs::rename(&from_path, &to_path).map_err(|e| e.to_string())?;
+    undo_stack.push(undoops::UndoEntry::Rename { from: from.clone(), to: to.clone() });
+    let _ = window.emit("reloadlist", "reload");
+    Ok(())
+}
+
+// ── File delete ──────────────────────────────────────────────────────────────
+#[tauri::command]
+async fn delete_items(
+    paths: Vec<String>,
+    permanent: bool,
+    undo_stack: tauri::State<'_, std::sync::Arc<UndoStack>>,
+    window: tauri::Window,
+) -> Result<(), String> {
+    use std::{fs, path::Path};
+    let mut deleted = Vec::new();
+    for p in &paths {
+        let path = Path::new(p);
+        if !path.exists() { continue; }
+        if permanent {
+            if path.is_dir() {
+                fs::remove_dir_all(path).map_err(|e| e.to_string())?;
             } else {
-                println!("Failed to fetch data. Status: {}", response.status());
-                Err("Could not check for updates".to_string())
+                fs::remove_file(path).map_err(|e| e.to_string())?;
+            }
+        } else {
+            // Move to ~/.local/share/Trash/files (XDG trash)
+            let trash_dir = dirs::data_dir()
+                .map(|d| d.join("Trash/files"))
+                .ok_or("Cannot locate trash directory".to_string())?;
+            fs::create_dir_all(&trash_dir).map_err(|e| e.to_string())?;
+            let filename = path.file_name().ok_or("Invalid path".to_string())?;
+            let dest = trash_dir.join(filename);
+            // Use rename first (same-fs fast path), fallback to copy+remove
+            if fs::rename(path, &dest).is_err() {
+                let opts = fs_extra::dir::CopyOptions::new();
+                fs_extra::move_items(&[path], &trash_dir, &opts).map_err(|e| e.to_string())?;
             }
         }
-        Err(_) => Err("Could not check for updates".to_string()),
+        deleted.push(p.clone());
     }
+    undo_stack.push(undoops::UndoEntry::Delete {
+        description: format!("{} item(s) deleted (permanent={})", deleted.len(), permanent),
+    });
+    let _ = window.emit("reloadlist", "reload");
+    Ok(())
 }
 
 fn get_boundary(request: &str) -> Option<String> {
@@ -947,6 +988,7 @@ fn main() {
         }
     });
 
+    let undo_stack = std::sync::Arc::new(UndoStack::default());
     let mut g = AppStateStore::new(CACHE_EXPIRY);
     let app = tauri::Builder::default()
         .setup(|app| {
@@ -962,6 +1004,7 @@ fn main() {
         })
         .on_window_event(on_window_event)
         .manage(g)
+        .manage(undo_stack)
         // Manage DualViewerStore so dual_* commands can access it via State<DualViewerStore>
         .manage(dual_viewer::DualViewerStore::default())
         .invoke_handler(tauri::generate_handler![
@@ -1031,8 +1074,10 @@ fn main() {
             dual_scroll_f1,
             dual_scroll_f2,
             dual_close,
-            // whattoload,
-            // get_window_label
+            rename_item,
+            delete_items,
+            undo_last_op,
+            undo_stack_len,
         ])
         .build(tauri::generate_context!())
         .expect("Failed to start app");
