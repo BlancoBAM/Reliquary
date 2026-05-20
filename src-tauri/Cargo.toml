@@ -110,6 +110,11 @@ percent-encoding = "2.3.1"
 # webkit2gtk = "0.18.2"
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52.0"
+
+# Force webkit2gtk to 0.18.1 — wry-0.24.x breaks with 0.18.2 (SettingsExt trait scope change)
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "=0.18.1", features = ["v2_36"] }
+
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
