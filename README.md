@@ -1,11 +1,27 @@
-# 🔥 Reliquary
+<p align="center">
+  <img src="assets/hero.jpeg" alt="Reliquary – Lilith Linux File Manager" width="100%">
+</p>
 
-> **The default GUI file manager for [Lilith Linux](https://github.com/BlancoBAM)**
-> Built on [filedime](https://github.com/visnkmr/filedime) · Powered by Tauri + Next.js
+<h1 align="center">🔥 Reliquary</h1>
 
-![Lilith Linux](https://img.shields.io/badge/Lilith_Linux-Default_File_Manager-c0392b?style=for-the-badge)
-![Tauri](https://img.shields.io/badge/Tauri-1.x-blueviolet?style=for-the-badge)
-![License](https://img.shields.io/github/license/BlancoBAM/Reliquary?style=for-the-badge)
+<p align="center">
+  <strong>The default GUI file manager for Lilith Linux</strong><br>
+  <sub>Built on <a href="https://github.com/visnkmr/filedime">filedime</a> · Tauri + Next.js · Lilim AI</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/BlancoBAM/Reliquary/releases/latest">
+    <img alt="Latest Release" src="https://img.shields.io/github/v/release/BlancoBAM/Reliquary?style=flat-square&color=c0392b&label=latest">
+  </a>
+  <a href="https://github.com/BlancoBAM/Reliquary/actions/workflows/build.yml">
+    <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/BlancoBAM/Reliquary/build.yml?style=flat-square&color=c0392b&label=build">
+  </a>
+  <a href="LICENSE">
+    <img alt="MIT License" src="https://img.shields.io/github/license/BlancoBAM/Reliquary?style=flat-square&color=c0392b">
+  </a>
+  <img alt="Lilith Linux" src="https://img.shields.io/badge/Lilith_Linux-default_FM-0a0a0a?style=flat-square&logo=linux&logoColor=c0392b">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-Tauri_1.x-c0392b?style=flat-square&logo=rust&logoColor=white">
+</p>
 
 ---
 
@@ -13,69 +29,93 @@
 
 | Feature | Description |
 |---|---|
-| **Drag & Drop Move** | Drag any file/folder onto a directory to move it instantly |
-| **Undo (Ctrl+Z)** | Undo the last move, copy, rename, or create operation |
-| **Rename** | Right-click → Rename, or use `F2` |
-| **Delete / Trash** | Right-click → Move to Trash (XDG-compliant) or Delete Permanently |
-| **Copy / Cut / Paste** | Full clipboard-style file operations with conflict resolution |
-| **Tabs & Multi-window** | Multiple tabs and independent windows |
-| **Bookmarks** | Sidebar bookmarks for quick access |
+| **Drag & Drop** | Drag any file or folder onto a directory to move it instantly |
+| **Copy / Cut / Paste** | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` — full clipboard file ops with conflict resolution |
+| **Rename** | Right-click → **Rename** inline |
+| **Delete / Trash** | Right-click → **Move to Trash** (XDG) or **Delete Permanently** |
+| **Undo** | `Ctrl+Z` undoes the last move, copy, rename or create |
+| **Tabs & Multi-window** | Unlimited tabs, independent windows |
+| **Bookmarks** | Persistent sidebar shortcuts |
 | **Drive Listing** | Auto-detect and browse mounted drives |
-| **File Preview** | Inline preview of text, images, video, PDF, Office files |
-| **Search** | Full-path fuzzy search with search-list indexing |
-| **AI File Queries** | Ask questions about file contents via [Lilim](https://github.com/BlancoBAM/Lilim) |
-| **Miller Columns** | Alternative column-based navigation view |
+| **File Preview** | Inline preview of text, images, video, PDF and Office files |
+| **Fuzzy Search** | Full-path search with indexed search lists |
+| **Lilim AI** | Ask questions about file contents via [Lilim](https://github.com/BlancoBAM/Lilim) |
+| **Miller Columns** | Alternative column-based navigation |
 | **Dual Viewer** | Side-by-side file comparison |
-| **Dark Theme** | Lilith Linux infernal dark theme by default |
+| **Infernal Dark Theme** | Lilith Linux black + crimson flame palette — always on |
 
 ---
 
-## 🎨 Theming
+## 🎨 Theme
 
-Reliquary ships with the **Lilith Linux Infernal Dark** theme:
+Reliquary uses the **Lilith Linux Infernal Dark** palette:
 
-- **Background**: `#0a0a0a` (near-black)
-- **Surface**: `#111111` / `#1a1a1a`
-- **Primary accent**: `#c0392b` (crimson flame)
-- **Secondary accent**: `#ff6b35` (ember orange)
-- **Typography**: Inter + Rajdhani (via Google Fonts)
+| Token | Value |
+|---|---|
+| Background | `#0a0a0a` |
+| Surface | `#111111` / `#1a1a1a` |
+| Primary accent | `#c0392b` — crimson flame |
+| Secondary accent | `#ff6b35` — ember orange |
+| Typography | Inter · Rajdhani |
 
 ---
 
-## 🤖 AI Integration (Lilim)
+## 🤖 Lilim AI Integration
 
-Reliquary connects to [Lilim](https://github.com/BlancoBAM/Lilim) — or any Ollama-compatible server — for:
+Reliquary connects to [Lilim](https://github.com/BlancoBAM/Lilim) — or any Ollama-compatible inference server — for:
 
 - **File embedding** — index file contents as vectors
-- **Semantic search** — query your files in natural language
+- **Semantic search** — natural-language queries across indexed files
 - **File chat** — ask questions about a specific document
 
-Configure the server URL in **Settings → Lilim / LLM server URL** (default: `http://127.0.0.1:11434`).
+Configure the endpoint in **Settings → Lilim / LLM server URL** (default: `http://127.0.0.1:11434`).
 
 ---
 
-## 🚀 Building
+## 📦 Installing on Lilith Linux
+
+Download the `.deb` package from the **[Releases page](https://github.com/BlancoBAM/Reliquary/releases/latest)** and install:
+
+```bash
+sudo dpkg -i reliquary_*.deb
+# or
+sudo apt install ./reliquary_*.deb
+```
+
+Set as the default file manager:
+
+```bash
+xdg-mime default reliquary.desktop inode/directory
+xdg-mime default reliquary.desktop application/x-gnome-saved-search
+```
+
+---
+
+## 🚀 Building from Source
 
 ### Prerequisites
 
 ```bash
-# Ubuntu / Lilith Linux
-sudo apt install libwebkit2gtk-4.0-dev build-essential libssl-dev libgtk-3-dev
+# Ubuntu 22.04 / Lilith Linux
+sudo apt install \
+  libwebkit2gtk-4.0-dev build-essential libssl-dev libgtk-3-dev \
+  libayatana-appindicator3-dev librsvg2-dev libsoup2.4-dev
 # Node 20+, Rust stable
 ```
 
-### Dev mode
+### Development
 
 ```bash
 npm install
-npm run dev   # starts Next.js + Tauri dev server
+npm run tauri dev   # Next.js hot-reload + Tauri window
 ```
 
-### Release build
+### Release .deb
 
 ```bash
-npm run build
-npx tauri build
+npm run build       # export Next.js to out/
+npm run tauri -- build --bundles deb
+# → src-tauri/target/release/bundle/deb/reliquary_*.deb
 ```
 
 ---
@@ -85,46 +125,24 @@ npx tauri build
 | Shortcut | Action |
 |---|---|
 | `Ctrl+Z` | Undo last file operation |
-| `Delete` | Move selected to Trash |
-| `Shift+Delete` | Permanently delete selected |
-| `Ctrl+C` | Copy current path/selection |
-| `Ctrl+X` | Cut current path/selection |
-| `Ctrl+V` | Paste (drop to current folder) |
+| `Delete` | Move selection to Trash |
+| `Shift+Delete` | Permanently delete selection |
+| `Ctrl+C` | Copy |
+| `Ctrl+X` | Cut |
+| `Ctrl+V` | Paste into current folder |
 | `Ctrl+T` | New tab |
 | `Ctrl+N` | New window |
 | `Ctrl+W` | Close tab |
 | `Ctrl+H` | Toggle hidden files |
-| `Alt+←` | Navigate back |
-| `Alt+→` | Navigate forward |
-| `Alt+↑` | Navigate to parent |
+| `Ctrl+D` | Bookmark current path |
+| `Alt+←` | Back |
+| `Alt+→` | Forward |
+| `Alt+↑` | Parent directory |
 | `F5` | Refresh |
-
----
-
-## 📦 Installing on Lilith Linux
-
-AppImage releases are built automatically via GitHub Actions when a version tag is pushed.
-Download the latest AppImage from the **[Releases page](https://github.com/BlancoBAM/Reliquary/releases/latest)**.
-
-```bash
-# 1. Download from the Releases page (or use wget/curl):
-wget https://github.com/BlancoBAM/Reliquary/releases/latest/download/Reliquary.AppImage
-
-# 2. Make executable and run:
-chmod +x Reliquary.AppImage
-./Reliquary.AppImage
-```
-
-To set Reliquary as the default file manager on Lilith Linux:
-
-```bash
-xdg-mime default reliquary.desktop inode/directory
-xdg-mime default reliquary.desktop application/x-gnome-saved-search
-```
 
 ---
 
 ## 🙏 Credits
 
-- Original **filedime** by [visnkmr](https://github.com/visnkmr/filedime) — MIT License
-- Reliquary fork & Lilith Linux integration by **BlancoBAM**
+- [filedime](https://github.com/visnkmr/filedime) by **visnkmr** — MIT License
+- Reliquary fork & Lilith Linux integration by **[BlancoBAM](https://github.com/BlancoBAM)**

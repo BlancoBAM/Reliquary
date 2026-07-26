@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ── System deps (webkit2gtk-4.0 is the Tauri v1 requirement) ─────────
+      # ── System deps (webkit2gtk-4.0 / soup-2.4 required by Tauri v1) ───────
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -28,8 +28,8 @@ jobs:
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            patchelf \
-            libsoup2.4-dev
+            libsoup2.4-dev \
+            patchelf
 
       # ── Node ─────────────────────────────────────────────────────────────
       - name: Setup Node.js 20
@@ -50,32 +50,44 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
-      # ── Frontend build (Next.js static export) ────────────────────────────
+      # ── Frontend static export ────────────────────────────────────────────
       - name: Build Next.js frontend
         run: npm run build
 
-      # ── Tauri .deb build ──────────────────────────────────────────────────
+      # ── Tauri .deb ───────────────────────────────────────────────────────
       - name: Build Tauri .deb package
         run: npm run tauri -- build --bundles deb
         env:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY || '' }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD || '' }}
 
-      # ── Upload .deb as release asset ─────────────────────────────────────
-      - name: Upload .deb to GitHub Release
+      # ── Source tarball ───────────────────────────────────────────────────
+      - name: Create source tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME:-dev}"
+          git archive --format=tar.gz \
+            --prefix="reliquary-${VERSION}/" \
+            HEAD \
+            > "reliquary-${VERSION}-source.tar.gz"
+          echo "TARBALL=reliquary-${VERSION}-source.tar.gz" >> "$GITHUB_ENV"
+
+      # ── Release ──────────────────────────────────────────────────────────
+      - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Reliquary ${{ github.ref_name }}
           draft: false
           prerelease: false
-          files: src-tauri/target/release/bundle/deb/*.deb
+          files: |
+            src-tauri/target/release/bundle/deb/*.deb
+            ${{ env.TARBALL }}
           body: |
             ## 🔥 Reliquary ${{ github.ref_name }}
 
-            Default file manager for **Lilith Linux** — dark, fast, and intelligent.
+            Default file manager for **Lilith Linux** — dark, fast, AI-integrated.
 
-            ### Install
+            ### Install (.deb)
 
             ```bash
             sudo dpkg -i reliquary_*.deb
@@ -89,12 +101,19 @@ jobs:
             xdg-mime default reliquary.desktop inode/directory
             ```
 
-            ### Features
-            - Drag-and-drop file moving
-            - Undo (Ctrl+Z) for moves, renames, copies, and creates
-            - Rename & Delete (Trash / Permanent) from right-click menu
-            - Delete key trashes selection; Shift+Delete permanently removes
-            - Lilim AI integration for file-content semantic search
-            - Full Lilith Linux Infernal Dark theme
+            ### What's new
+
+            See the [commit log](https://github.com/BlancoBAM/Reliquary/commits/${{ github.ref_name }}) for details.
+
+            ---
+
+            **Highlights**
+            - Visual drag-and-drop file moving
+            - `Ctrl+Z` undo for moves, copies, renames, creates
+            - `Delete` → Trash · `Shift+Delete` → permanent
+            - Rename inline from context menu
+            - `Ctrl+C/X/V` copy/cut/paste with conflict resolution
+            - Lilim AI semantic search & file chat
+            - Lilith Linux Infernal Dark theme
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
