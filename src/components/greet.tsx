@@ -325,6 +325,47 @@ export default function Greet() {
       });
     }, { ctrlKey: true, code: "KeyZ" });
 
+    // ── Ctrl+V — Paste (copy/move) clipboard items into current dir ─────────
+    useKeyboardShortcut((e)=>{
+      if(fileopsrc.length === 0) return;
+      e.preventDefault();
+      const operationType = fileOpType === "cut" ? "move" : "copy";
+      invoke('checkforconflicts', {
+        srclist: JSON.stringify(fileopsrc),
+        dst: path,
+      }).then((a)=>{
+        const listofdupes: existingfileinfo[] = JSON.parse(a as unknown as string);
+        if(listofdupes.length === 0){
+          const operationId = `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          setActiveOperationId(operationId);
+          setShowProgress(true);
+          invoke('start_file_operation', {
+            operationId,
+            srclist: JSON.stringify(fileopsrc),
+            dst: path,
+            operationType,
+            dlastore: JSON.stringify([]),
+          }).then(() => {
+            toast({ title: operationType === "move" ? "📦 Moved" : "📋 Pasted", description: `→ ${path}` });
+            reloadlist();
+          }).catch((err: unknown) => {
+            toast({ variant:"destructive", title:"Paste failed", description: err as string });
+            setShowProgress(false);
+            setActiveOperationId(null);
+          });
+          setfos([]);
+          setFileOpType("copy");
+          setfod("");
+        } else {
+          setdest(path);
+          setdupes(listofdupes.map((item): operationfileinfo => ({ ...item, replace: false })));
+          setsal(true);
+        }
+      }).catch((err: unknown) => {
+        toast({ variant:"destructive", title:"Paste error", description: err as string });
+      });
+    }, { ctrlKey: true, code: "KeyV" });
+
     // ── Delete key — trash selected file ────────────────────────────────────
     useKeyboardShortcut((e)=>{
       if(fileopsrc.length > 0){
